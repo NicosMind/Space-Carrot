@@ -7,8 +7,8 @@
 
 
 // define some values used by the panel and buttons
-
-int Z_ENABLE, Z_DIR, Z_STEP, R_ENABLE, R_DIR, R_STEP, R_MIN, Z_MAX, Z_MIN, R_COUNT, Z_COUNT, Z_SPEED, R_SPEED, TETA_SPEED, TETA_MAXSTEP, tour, TETA_ENABLE, TETA_DIR, TETA_STEP, TETA_MAX, TETA_MIN, PUMP_ONOFF, PAV_ONOFF;
+int Z_ENABLE, Z_DIR, Z_STEP, R_ENABLE, R_DIR, R_STEP, R_MIN, Z_MAX, Z_MIN, R_COUNT, Z_COUNT, Z_SPEED;
+int R_SPEED, TETA_SPEED, TETA_MAXSTEP, tour, TETA_ENABLE, TETA_DIR, TETA_STEP, TETA_MAX, TETA_MIN, PUMP_ONOFF, PAV_ONOFF;
 int compteur, MAXH, MAXV, nbpas, distH, distV;
 float R_STEPDIST, Z_STEPDIST, TETA_STEPDIST;
 
@@ -120,6 +120,7 @@ void loop()
 
     while (1);
 }
+
 //******* POSITION CHARIOT HORIZONTAL**************************
 int R_POS(int compt, int distH, float convR)
 
@@ -160,6 +161,7 @@ int R_POS(int compt, int distH, float convR)
     digitalWrite(R_ENABLE, HIGH);
     return (distH);
 }
+
 //******* POSITION CHARIOT VERTICAL**************************
 int Z_POS(int compt, int distV, float convZ)
 
@@ -206,6 +208,7 @@ int Z_POS(int compt, int distV, float convZ)
 
     return (compt + compteur * Z_STEPDIST);
 }
+
 //************** HOME VERTICAL*************************
 int Z_HOME()
 
