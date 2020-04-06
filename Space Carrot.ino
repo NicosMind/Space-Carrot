@@ -191,6 +191,7 @@ int TETA_HOME()
 
 }
 
+//************** Mooving one stepper at the time***************
 void stepperMov(int enablePin, int dirPin, int stepPin, float steps, int dirMotor, int speedMotor)
 {
 
@@ -206,10 +207,12 @@ void stepperMov(int enablePin, int dirPin, int stepPin, float steps, int dirMoto
     
 }
 
-void multiStepper(float stepR, float stepTETA)
+//*********** Mooving multiple stepper at the time*************
+void multiStepper(float posR, float posTETA)
 {
-    float stepRPos = stepR;
-    float stepTETAPos = stepTETA;
+    //Variable a modifer une fois la formule trouvés pour transformer les coordonnes en steps pour les moteurs
+    float stepRPos = posR;              
+    float stepTETAPos = posTETA;
 
     float numSteps = 0.0;
     float stepRPosBuffer = 0.0;
@@ -224,7 +227,7 @@ void multiStepper(float stepR, float stepTETA)
     }
     if (numSteps > 0)
     {
-        for (int i = 0; i < numSteps; i++)
+        for (int x = 0; x < numSteps; x++)
         {
 
             stepRPosBuffer += (stepRPos / numSteps);
@@ -243,7 +246,7 @@ void multiStepper(float stepR, float stepTETA)
         stepRPos = abs(stepRPos);
         stepTETAPos = abs(stepTETAPos);
 
-        for (int i = 0; i < numSteps; i++)
+        for (int x = 0; x < numSteps; x++)
         {
             stepRPosBuffer += (stepRPos / numSteps);
             stepTETAPosBuffer += (stepTETAPos / numSteps);
@@ -255,6 +258,13 @@ void multiStepper(float stepR, float stepTETA)
             Serial.println("  ");
         }
     }
+}
+
+int HOMMING_ALL()
+{
+    Z_HOME();
+    R_HOME();
+    TETA_HOME();
 }
 
 void setup(){
@@ -323,6 +333,7 @@ void setup(){
     pinMode(PUMP_ONOFF, OUTPUT);
     pinMode(PAV_ONOFF, OUTPUT);
     digitalWrite(PAV_ONOFF, LOW);
+    digitalWrite(PUMP_ONOFF, LOW);
 }
 
 void loop()
@@ -344,12 +355,9 @@ void loop()
     Z_COUNT = Z_POS(Z_COUNT, 1500, Z_STEPDIST);
     Serial.println(Z_COUNT);
 
-    digitalWrite(PAV_ONOFF, HIGH);
-    delay(10000);
-    digitalWrite(PAV_ONOFF, LOW);
-
-
-
+    //digitalWrite(PAV_ONOFF, HIGH);
+    //delay(10000);
+    //digitalWrite(PAV_ONOFF, LOW);
 
     while (1);
 }
