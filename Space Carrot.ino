@@ -15,6 +15,7 @@ float R_STEPDIST, Z_STEPDIST, TETA_STEPDIST;
 const int CW = HIGH;
 const int CCW = LOW;
 
+#define STEPS 400 // va avec la fonction STEPPER_ACCEL_MOV
 
 
 //******* POSITION CHARIOT HORIZONTAL**************************
@@ -192,7 +193,7 @@ int TETA_HOME()
 }
 
 //************** Mooving one stepper at the time***************
-void stepperMov(int enablePin, int dirPin, int stepPin, float steps, int dirMotor, int speedMotor)
+void STEPPER_MOV(int enablePin, int dirPin, int stepPin, float steps, int dirMotor, int speedMotor)
 {
 
     digitalWrite(enablePin, LOW);
@@ -208,7 +209,7 @@ void stepperMov(int enablePin, int dirPin, int stepPin, float steps, int dirMoto
 }
 
 //*********** Mooving multiple stepper at the time*************
-void multiStepper(float posR, float posTETA)
+void MULTI_STEPPER(float posR, float posTETA)
 {
     //Variable a modifer une fois la formule trouvés pour transformer les coordonnes en steps pour les moteurs
     float stepRPos = posR;              
@@ -232,8 +233,8 @@ void multiStepper(float posR, float posTETA)
 
             stepRPosBuffer += (stepRPos / numSteps);
             stepTETAPosBuffer += (stepTETAPos / numSteps);
-            stepperMov(R_ENABLE, R_DIR, R_STEP, stepRPosBuffer, CW, 1000);
-            stepperMov(TETA_ENABLE, TETA_DIR, TETA_STEP, stepTETAPosBuffer, CW, 1000);
+            STEPPER_MOV(R_ENABLE, R_DIR, R_STEP, stepRPosBuffer, CW, 1000);
+            STEPPER_MOV(TETA_ENABLE, TETA_DIR, TETA_STEP, stepTETAPosBuffer, CW, 1000);
             Serial.print(stepRPosBuffer);
             Serial.print("   ");
             Serial.print(stepTETAPosBuffer);
@@ -250,8 +251,8 @@ void multiStepper(float posR, float posTETA)
         {
             stepRPosBuffer += (stepRPos / numSteps);
             stepTETAPosBuffer += (stepTETAPos / numSteps);
-            stepperMov(R_ENABLE, R_DIR, R_STEP, stepRPosBuffer, CCW, 600);
-            stepperMov(TETA_ENABLE, TETA_DIR, TETA_STEP, stepTETAPosBuffer, CCW, 600);
+            STEPPER_MOV(R_ENABLE, R_DIR, R_STEP, stepRPosBuffer, CCW, 600);
+            STEPPER_MOV(TETA_ENABLE, TETA_DIR, TETA_STEP, stepTETAPosBuffer, CCW, 600);
             Serial.print(stepRPosBuffer);
             Serial.print("   ");
             Serial.print(stepTETAPosBuffer);
@@ -265,6 +266,41 @@ int HOMMING_ALL()
     Z_HOME();
     R_HOME();
     TETA_HOME();
+}
+
+
+// juste un test d'une potentielle fonction pour gérer l'accélération du moteur (fonctionne seulement en simple moteur pas multi)
+void STEPPER_ACCEL_MOV(int STEP_PIN) {
+
+    int delays[STEPS];
+    float angle = 1;
+    float accel = 0.01;
+    float c0 = 2000 * sqrt(2 * angle / accel) * 0.67703;
+    float lastDelay = 0;
+    int highSpeed = 100;
+    for (int i = 0; i < STEPS; i++) {
+        float d = c0;
+        if (i > 0)
+            d = lastDelay - (2 * lastDelay) / (4 * i + 1);
+        if (d < highSpeed)
+            d = highSpeed;
+        delays[i] = d;
+        lastDelay = d;
+    }
+
+    // use delays from the array, forward
+    for (int i = 0; i < STEPS; i++) {
+        digitalWrite(STEP_PIN, HIGH);
+        delayMicroseconds(delays[i]);
+        digitalWrite(STEP_PIN, LOW);
+    }
+
+    // use delays from the array, backward
+    for (int i = 0; i < STEPS; i++) {
+        digitalWrite(STEP_PIN, HIGH);
+        delayMicroseconds(delays[STEPS - i - 1]);
+        digitalWrite(STEP_PIN, LOW);
+    }
 }
 
 void setup(){
