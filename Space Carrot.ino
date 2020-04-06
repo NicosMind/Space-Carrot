@@ -165,7 +165,7 @@ int Z_POS(int compt, int distV, float convZ)
 
 {
 
-    nbpas = (compt - distV) / float convZ;
+    nbpas = (compt - distV) /  convZ;
 
     // Serial.println(nbpas);
 
