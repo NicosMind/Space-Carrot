@@ -208,7 +208,53 @@ void stepperMov(int enablePin, int dirPin, int stepPin, float steps, int dirMoto
 
 void multiStepper(float stepR, float stepTETA)
 {
+    float stepRPos = stepR;
+    float stepTETAPos = stepTETA;
 
+    float numSteps = 0.0;
+    float stepRPosBuffer = 0.0;
+    float stepTETAPosBuffer = 0.0;
+    if (stepRPos > stepTETAPos)
+    {
+        numSteps = stepRPos;
+    }
+    else
+    {
+        numSteps = stepTETAPos;
+    }
+    if (numSteps > 0)
+    {
+        for (int i = 0; i < numSteps; i++)
+        {
+
+            stepRPosBuffer += (stepRPos / numSteps);
+            stepTETAPosBuffer += (stepTETAPos / numSteps);
+            stepperMov(R_ENABLE, R_DIR, R_STEP, stepRPosBuffer, CW, 1000);
+            stepperMov(TETA_ENABLE, TETA_DIR, TETA_STEP, stepTETAPosBuffer, CW, 1000);
+            Serial.print(stepRPosBuffer);
+            Serial.print("   ");
+            Serial.print(stepTETAPosBuffer);
+            Serial.println(" ");
+        }
+    }
+    else if (numSteps < 0)
+    {
+        numSteps = abs(numSteps);
+        stepRPos = abs(stepRPos);
+        stepTETAPos = abs(stepTETAPos);
+
+        for (int i = 0; i < numSteps; i++)
+        {
+            stepRPosBuffer += (stepRPos / numSteps);
+            stepTETAPosBuffer += (stepTETAPos / numSteps);
+            stepperMov(R_ENABLE, R_DIR, R_STEP, stepRPosBuffer, CCW, 600);
+            stepperMov(TETA_ENABLE, TETA_DIR, TETA_STEP, stepTETAPosBuffer, CCW, 600);
+            Serial.print(stepRPosBuffer);
+            Serial.print("   ");
+            Serial.print(stepTETAPosBuffer);
+            Serial.println("  ");
+        }
+    }
 }
 
 void setup(){
