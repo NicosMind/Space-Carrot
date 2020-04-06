@@ -8,12 +8,22 @@
 
 // define some values used by the panel and buttons
 int Z_ENABLE, Z_DIR, Z_STEP, R_ENABLE, R_DIR, R_STEP, R_MIN, Z_MAX, Z_MIN, R_COUNT, Z_COUNT, Z_SPEED;
-int R_SPEED, TETA_SPEED, TETA_MAXSTEP, tour, TETA_ENABLE, TETA_DIR, TETA_STEP, TETA_MAX, TETA_MIN, PUMP_ONOFF, PAV_ONOFF;
+int R_SPEED, TETA_SPEED, TETA_MAXSTEP, tour, TETA_ENABLE, TETA_DIR, TETA_STEP, TETA_MAX, TETA_MIN, PUMP_ONOFF, VACUUM_PUMP_ONOFF;
 int compteur, MAX_R, MAX_Z, nbpas, distH, distV;
 float R_STEPDIST, Z_STEPDIST, TETA_STEPDIST;
 
 const int CW = HIGH;
 const int CCW = LOW;
+
+bool enableStateTETA = false;
+bool enableStateR = false;
+bool enableStateZ = false;
+
+int countingStepsTETA = 0;
+int countingStepsR = 0;
+int countingStepsZ = 0;
+
+
 
 #define STEPS 400 // va avec la fonction STEPPER_ACCEL_MOV
 
@@ -261,6 +271,8 @@ void MULTI_STEPPER(float posR, float posTETA)
     }
 }
 
+
+//************** HOMMING ALL MOTOR (Z,R,TETA) *****************
 int HOMMING_ALL()
 {
     Z_HOME();
@@ -268,9 +280,9 @@ int HOMMING_ALL()
     TETA_HOME();
 }
 
-
-// juste un test d'une potentielle fonction pour gérer l'accélération du moteur (fonctionne seulement en simple moteur pas multi)
+//******************** LINEAR ACCELERATION ********************
 void STEPPER_ACCEL_MOV(int STEP_PIN) {
+    // juste un test d'une potentielle fonction pour gérer l'accélération du moteur (fonctionne seulement en simple moteur pas multi)
 
     int delays[STEPS];
     float angle = 1;
@@ -303,6 +315,166 @@ void STEPPER_ACCEL_MOV(int STEP_PIN) {
     }
 }
 
+
+//****************** ENABLE/DISABLE MOTOR *********************
+void ENABLE_TETA()
+{
+    if (enableStateTETA == true)
+    {
+        digitalWrite(TETA_ENABLE, !enableStateTETA);
+        enableStateTETA = !enableStateTETA;
+    }
+    else
+    {
+        digitalWrite(TETA_ENABLE, !enableStateTETA);
+        enableStateTETA = !enableStateTETA;
+    }
+}
+
+void ENABLE_R()
+{
+    if (enableStateR == true)
+    {
+        digitalWrite(R_ENABLE, !enableStateR);
+        enableStateR = !enableStateR;
+    }
+    else
+    {
+        digitalWrite(R_ENABLE, !enableStateR);
+        enableStateR = !enableStateR;
+    }
+}
+
+void ENABLE_Z()
+{
+    if (enableStateZ == true)
+    {
+        digitalWrite(Z_ENABLE, !enableStateZ);
+        enableStateZ = !enableStateZ;
+    }
+    else
+    {
+        digitalWrite(Z_ENABLE, !enableStateZ);
+        enableStateZ = !enableStateZ;
+    }
+}
+
+//**************** ENABLE/DISABLE ALL MOTOR *******************
+void ENABLE_ALL()
+{
+    ENABLE_TETA();
+    ENABLE_R();
+    ENABLE_Z();
+}
+
+
+//************* CONTROL TROUGH SERIAL MONITOR *****************
+void SERIAL_COMMAND()
+{
+    if (Serial.available() > 0)
+    {
+        if (Serial.peek() == 'H')
+        {
+            int clrBuffer;
+            Serial.read();
+            clrBuffer = Serial.parseInt();
+            HOMMING_ALL();
+        }
+        else if (Serial.peek() == 'T')
+        {
+            int numSteps = 0;
+            Serial.read();
+            numSteps = Serial.parseInt();
+            Serial.println(numSteps);
+            if (numSteps > 0)
+            {
+                //Serial.println("tourne CW");
+                STEPPER_MOV(TETA_ENABLE, TETA_DIR, TETA_STEP, numSteps, CW, 1000);
+                countingStepsTETA = (countingStepsTETA + numSteps);
+            }
+            else if (numSteps < 0)
+            {
+                //Serial.println("tourne CCW");
+                numSteps = abs(numSteps);
+                STEPPER_MOV(TETA_ENABLE, TETA_DIR, TETA_STEP, numSteps, CCW, 1000);
+                countingStepsTETA = (countingStepsTETA - numSteps);
+            }
+        }
+        else if (Serial.peek() == 'R')
+        {
+            int numSteps = 0;
+            Serial.read();
+            numSteps = Serial.parseInt();
+            Serial.println(numSteps);
+            if (numSteps > 0)
+            {
+                //Serial.println("tourne CW");
+                STEPPER_MOV(R_ENABLE, R_DIR, R_STEP, numSteps, CW, 1000);
+                countingStepsR = (countingStepsR + numSteps);
+            }
+            else if (numSteps < 0)
+            {
+                //Serial.println("tourne CCW");
+                numSteps = abs(numSteps);
+                STEPPER_MOV(R_ENABLE, R_DIR, R_STEP, numSteps, CCW, 1000);
+                countingStepsR = (countingStepsR - numSteps);
+            }
+        }
+        else if (Serial.peek() == 'Z')
+        {
+            int numSteps = 0;
+            Serial.read();
+            numSteps = Serial.parseInt();
+            Serial.println(numSteps);
+            if (numSteps > 0)
+            {
+                //Serial.println("tourne CW");
+                STEPPER_MOV(Z_ENABLE, Z_DIR, Z_STEP, numSteps, CW, 1000);
+                countingStepsZ = (countingStepsZ + numSteps);
+            }
+            else if (numSteps < 0)
+            {
+                //Serial.println("tourne CCW");
+                numSteps = abs(numSteps);
+                STEPPER_MOV(Z_ENABLE, Z_DIR, Z_STEP, numSteps, CCW, 1000);
+                countingStepsZ = (countingStepsZ - numSteps);
+            }
+        }
+        else if (Serial.peek() == 'P')
+        {
+            int state = 0;
+            Serial.read();
+            state = Serial.parseInt();
+            Serial.println(state);
+            digitalWrite(VACUUM_PUMP_ONOFF, state);
+        }
+
+        else if (Serial.peek() == 'E')
+        {
+            int clrBuffer;
+            ENABLE_ALL();
+            Serial.read();
+            clrBuffer = Serial.parseInt();
+        }
+        else
+        {
+            int clrBuffer;
+            Serial.read();
+            clrBuffer = Serial.parseInt();
+        }
+        Serial.print("StepsTETA : ");
+        Serial.println(countingStepsTETA);
+        Serial.print("StepsR : ");
+        Serial.println(countingStepsR);
+        Serial.print("StepsZ : ");
+        Serial.println(countingStepsZ);
+    }
+    else
+    {
+
+    }
+}
+
 void setup(){
 
     // open the serial port at 9600 bps:
@@ -331,7 +503,7 @@ void setup(){
 
     // definition pin auxilaire
     PUMP_ONOFF = 25;    //pompe a eau
-    PAV_ONOFF = 33;     //pompe a vide
+    VACUUM_PUMP_ONOFF = 33;     //pompe a vide
 
     // delai en micros entre HIGH et LOW 
     Z_SPEED = 500;
@@ -367,8 +539,8 @@ void setup(){
     pinMode(TETA_MIN, INPUT);
 
     pinMode(PUMP_ONOFF, OUTPUT);
-    pinMode(PAV_ONOFF, OUTPUT);
-    digitalWrite(PAV_ONOFF, LOW);
+    pinMode(VACUUM_PUMP_ONOFF, OUTPUT);
+    digitalWrite(VACUUM_PUMP_ONOFF, LOW);
     digitalWrite(PUMP_ONOFF, LOW);
 }
 
