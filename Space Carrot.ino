@@ -12,6 +12,9 @@ int R_SPEED, TETA_SPEED, TETA_MAXSTEP, tour, TETA_ENABLE, TETA_DIR, TETA_STEP, T
 int compteur, MAX_R, MAX_Z, nbpas, distH, distV;
 float R_STEPDIST, Z_STEPDIST, TETA_STEPDIST;
 
+const int CW = HIGH;
+const int CCW = LOW;
+
 
 
 //******* POSITION CHARIOT HORIZONTAL**************************
@@ -55,7 +58,7 @@ int R_POS(int compt, int distH, float convR)
     return (distH);
 }
 
-//******* POSITION CHARIOT VERTICAL**************************
+//******* POSITION CHARIOT VERTICAL****************************
 int Z_POS(int compt, int distV, float convZ)
 
 {
@@ -102,7 +105,7 @@ int Z_POS(int compt, int distV, float convZ)
     return (compt + compteur * Z_STEPDIST);
 }
 
-//************** HOME VERTICAL*************************
+//************** HOME VERTICAL*********************************
 int Z_HOME()
 
 // retour chariot horizontal s'arrete quand stop passe de 0 a 1
@@ -124,7 +127,7 @@ int Z_HOME()
 
 }
 
-//************** HOME HORIZONTAL*************************
+//************** HOME HORIZONTAL*******************************
 int R_HOME()
 
 // retour chariot horizontal s'arrete quand stop passe de 0 a 1
@@ -148,7 +151,7 @@ int R_HOME()
 
 }
 
-//************** HOME ANGULAIRE*************************
+//************** HOME ANGULAIRE********************************
 int TETA_HOME()
 
 // retour chariot horizontal s'arrete quand stop passe de 0 a 1
@@ -188,6 +191,25 @@ int TETA_HOME()
 
 }
 
+void stepperMov(int enablePin, int dirPin, int stepPin, float steps, int dirMotor, int speedMotor)
+{
+
+    digitalWrite(enablePin, LOW);
+    digitalWrite(dirPin, dirMotor);
+    for (int x = 0; x < steps; x++)
+    {
+        digitalWrite(stepPin, HIGH);
+        delayMicroseconds(speedMotor);
+        digitalWrite(stepPin, LOW);
+        delayMicroseconds(speedMotor);
+    }
+    
+}
+
+void multiStepper(float stepR, float stepTETA)
+{
+
+}
 
 void setup(){
 
@@ -195,53 +217,44 @@ void setup(){
     Serial.begin(9600);
 
     //defintion pins chariot radial
-    R_ENABLE = 15;//enable
-    R_DIR = 17;//direction
-    R_STEP = 16; //step
-    R_MIN = 27; // fin de course
+    R_ENABLE = 15;      //enable
+    R_DIR = 17;         //direction
+    R_STEP = 16;        //step
+    R_MIN = 27;         //fin de course
 
     // définition pins chariot vertical
-
-    Z_ENABLE = 26; //enable
-    Z_DIR = 12; //direction
-    Z_STEP = 4; //step
-    Z_MAX = 39; // fin de course en haut
-    Z_MIN = 36; // fin course contact sol
+    Z_ENABLE = 26;      //enable
+    Z_DIR = 12;         //direction
+    Z_STEP = 4;         //step
+    Z_MAX = 39;         //fin de course en haut
+    Z_MIN = 36;         //fin course contact sol
 
 
     // définition pins rotation bras
-
-    TETA_ENABLE = 2; //enable
-    TETA_DIR = 14; //direction
-    TETA_STEP = 13; //step
-    TETA_MAX = 34; // fin de course en haut
-    TETA_MIN = 35; // fin course contact sol
+    TETA_ENABLE = 2;    //enable
+    TETA_DIR = 14;      //direction
+    TETA_STEP = 13;     //step
+    TETA_MAX = 34;      //fin de course en haut
+    TETA_MIN = 35;      //fin course contact sol
 
     // definition pin auxilaire
-
-    PUMP_ONOFF = 25; // pompe a eau
-    PAV_ONOFF = 33; //  pompe a vide
-
-
+    PUMP_ONOFF = 25;    //pompe a eau
+    PAV_ONOFF = 33;     //pompe a vide
 
     // delai en micros entre HIGH et LOW 
     Z_SPEED = 500;
     R_SPEED = 500;
     TETA_SPEED = 500;
 
-
-
     R_STEPDIST = 3.14 * 10 / 200;
     Z_STEPDIST = 3.14 * 10 / 200;
 
 
     // Z_STEPDIST = 3.14 * 10 / 200; //  distance pacourue par 1 pas V
-
     tour = 200;
 
     MAX_R = 1000;
     MAX_Z = 5000;
-
 
     //definition type pin
     pinMode(Z_ENABLE, OUTPUT);
@@ -264,7 +277,6 @@ void setup(){
     pinMode(PUMP_ONOFF, OUTPUT);
     pinMode(PAV_ONOFF, OUTPUT);
     digitalWrite(PAV_ONOFF, LOW);
-
 }
 
 void loop()
