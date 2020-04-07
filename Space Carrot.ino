@@ -7,10 +7,18 @@
 
 
 // define some values used by the panel and buttons
-int Z_ENABLE, Z_DIR, Z_STEP, R_ENABLE, R_DIR, R_STEP, R_MIN, Z_MAX, Z_MIN, R_COUNT, Z_COUNT, Z_SPEED;
-int R_SPEED, TETA_SPEED, TETA_MAXSTEP, tour, TETA_ENABLE, TETA_DIR, TETA_STEP, TETA_MAX, TETA_MIN, PUMP_ONOFF, VACUUM_PUMP_ONOFF;
-int compteur, MAX_R, MAX_Z, nbpas, distH, distV;
+
+int  tour, PUMP_ONOFF, VACUUM_PUMP_ONOFF;
+int compteur, MAX_R_STEPS, MAX_Z_STEPS, distH, distV;
+
+//int numSTEPS; // a nettoyer dans le code pour l passé en variable local !!
+
+int Z_ENABLE, Z_DIR, Z_STEP, Z_MIN, Z_MAX, Z_COUNT, Z_SPEED;
+int R_ENABLE, R_DIR, R_STEP, R_MIN, R_COUNT, R_SPEED;
+int TETA_ENABLE, TETA_DIR, TETA_STEP, TETA_MIN, TETA_MAX, TETA_MAXSTEP, TETA_SPEED;
+
 float R_STEPDIST, Z_STEPDIST, TETA_STEPDIST;
+
 
 const int CW = HIGH;
 const int CCW = LOW;
@@ -33,20 +41,20 @@ int R_POS(int compt, int distH, float convR)
 
 {
 
-    nbpas = (compt - distH) / convR;
+  int  numSTEPS = (compt - distH) / convR;
 
-    // Serial.println(nbpas);
+    // Serial.println(numSTEPS);
 
     // on verifie que l'on ne depasse pas la longueur du chariot
-    if (distH > MAX_R)
+    if (distH > MAX_R_STEPS)
     {
-        distH = MAX_R;
+        distH = MAX_R_STEPS;
     }
 
     digitalWrite(R_ENABLE, LOW);
 
     // on regarde dans quel sens on part
-    if (nbpas < 0)
+    if (numSTEPS < 0)
     {
         digitalWrite(R_DIR, LOW); // verifier sens !
     }
@@ -57,7 +65,7 @@ int R_POS(int compt, int distH, float convR)
 
     // on avance ou recule du nombre de pas
 
-    for (compteur = 0; compteur < abs(nbpas); compteur++)
+    for (compteur = 0; compteur < abs(numSTEPS); compteur++)
     {
 
         digitalWrite(R_STEP, HIGH);
@@ -69,25 +77,49 @@ int R_POS(int compt, int distH, float convR)
     return (distH);
 }
 
+//************** HOME HORIZONTAL*******************************
+int R_HOME()
+
+// retour chariot horizontal s'arrete quand stop passe de 0 a 1
+{
+
+    digitalWrite(R_ENABLE, LOW);
+    digitalWrite(R_DIR, HIGH); // verifier sens !
+    while (digitalRead(R_MIN) == LOW)
+
+    {
+        digitalWrite(R_STEP, HIGH);
+        delayMicroseconds(R_SPEED);
+        digitalWrite(R_STEP, LOW);
+        delayMicroseconds(R_SPEED);
+        //  Serial.println(digitalRead(R_MIN));
+
+    }
+    digitalWrite(R_ENABLE, HIGH);
+
+    return (0);
+
+}
+
 //******* POSITION CHARIOT VERTICAL****************************
 int Z_POS(int compt, int distV, float convZ)
 
 {
 
-    nbpas = (compt - distV) /  convZ;
+    int numSTEPS = (compt - distV) /  convZ;
 
-    // Serial.println(nbpas);
+    // Serial.println(numSTEPS);
 
     // on verifie que l'on ne depasse pas la longueur du chariot
-    if (distV > MAX_Z)
+    if (distV > MAX_Z_STEPS)
     {
-        distV = MAX_Z;
+        distV = MAX_Z_STEPS;
     }
 
     digitalWrite(Z_ENABLE, LOW);
 
     // on regarde dans quel sens on part
-    if (nbpas < 0)
+    if (numSTEPS < 0)
     {
         digitalWrite(Z_DIR, LOW); // verifier sens !
     }
@@ -98,7 +130,7 @@ int Z_POS(int compt, int distV, float convZ)
 
     // on avance ou recule du nombre de pas
 
-    for (compteur = 0; compteur < abs(nbpas); compteur++)
+    for (compteur = 0; compteur < abs(numSTEPS); compteur++)
     {
 
         digitalWrite(Z_STEP, HIGH);
@@ -138,30 +170,11 @@ int Z_HOME()
 
 }
 
-//************** HOME HORIZONTAL*******************************
-int R_HOME()
-
-// retour chariot horizontal s'arrete quand stop passe de 0 a 1
+//************** POSITION ANGULAIRE********************************
+int TETA_POS()
 {
 
-    digitalWrite(R_ENABLE, LOW);
-    digitalWrite(R_DIR, HIGH); // verifier sens !
-    while (digitalRead(R_MIN) == LOW)
-
-    {
-        digitalWrite(R_STEP, HIGH);
-        delayMicroseconds(R_SPEED);
-        digitalWrite(R_STEP, LOW);
-        delayMicroseconds(R_SPEED);
-        //  Serial.println(digitalRead(R_MIN));
-
-    }
-    digitalWrite(R_ENABLE, HIGH);
-
-    return (0);
-
 }
-
 //************** HOME ANGULAIRE********************************
 int TETA_HOME()
 
@@ -201,6 +214,7 @@ int TETA_HOME()
     return (TETA_STEPDIST);
 
 }
+
 
 //************** Mooving one stepper at the time***************
 void STEPPER_MOV(int enablePin, int dirPin, int stepPin, float steps, int dirMotor, int speedMotor)
@@ -314,6 +328,7 @@ void STEPPER_ACCEL_MOV(int STEP_PIN) {
         digitalWrite(STEP_PIN, LOW);
     }
 }
+
 
 
 //****************** ENABLE/DISABLE MOTOR *********************
@@ -517,8 +532,8 @@ void setup(){
     // Z_STEPDIST = 3.14 * 10 / 200; //  distance pacourue par 1 pas V
     tour = 200;
 
-    MAX_R = 1000;
-    MAX_Z = 5000;
+    MAX_R_STEPS = 1000;
+    MAX_Z_STEPS = 5000;
 
     //definition type pin
     pinMode(Z_ENABLE, OUTPUT);
