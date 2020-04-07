@@ -6,12 +6,14 @@
 
 
 
-// define some values used by the panel and buttons
 
-int  tour, PUMP_ONOFF, VACUUM_PUMP_ONOFF;
-int compteur, MAX_R_STEPS, MAX_Z_STEPS, distH, distV;
 
-//int numSTEPS; // a nettoyer dans le code pour l passé en variable local !!
+int PUMP_ONOFF, VACUUM_PUMP_ONOFF;
+
+
+int compteur, MAX_R_STEPS, MAX_Z_STEPS, distH, NEW_POS_Z;
+
+
 
 int Z_ENABLE, Z_DIR, Z_STEP, Z_MIN, Z_MAX, Z_COUNT, Z_SPEED;
 int R_ENABLE, R_DIR, R_STEP, R_MIN, R_COUNT, R_SPEED;
@@ -31,24 +33,25 @@ int countingStepsTETA = 0;
 int countingStepsR = 0;
 int countingStepsZ = 0;
 
-
+float R_STEPDIST = 3.14 * 10 / 200;
+float Z_STEPDIST = 3.14 * 10 / 200;
+// Z_STEPDIST = 3.14 * 10 / 200; //  distance pacourue par 1 pas V
+int FULL_REVOLUTION_STEPS = 200;
 
 #define STEPS 400 // va avec la fonction STEPPER_ACCEL_MOV
 
 
 //******* POSITION CHARIOT HORIZONTAL**************************
-int R_POS(int compt, int distH, float convR)
-
+int R_POS(int compt, int NEW_POS_R)
 {
-
-  int  numSTEPS = (compt - distH) / convR;
-
+  Z_HOME();
+  float  numSTEPS = (compt - NEW_POS_R) / R_STEPDIST;
     // Serial.println(numSTEPS);
 
     // on verifie que l'on ne depasse pas la longueur du chariot
-    if (distH > MAX_R_STEPS)
+    if (NEW_POS_R > MAX_R_STEPS)
     {
-        distH = MAX_R_STEPS;
+        NEW_POS_R = MAX_R_STEPS;
     }
 
     digitalWrite(R_ENABLE, LOW);
@@ -65,7 +68,7 @@ int R_POS(int compt, int distH, float convR)
 
     // on avance ou recule du nombre de pas
 
-    for (compteur = 0; compteur < abs(numSTEPS); compteur++)
+    for (int i = 0; i < abs(numSTEPS); i++)
     {
 
         digitalWrite(R_STEP, HIGH);
@@ -74,7 +77,7 @@ int R_POS(int compt, int distH, float convR)
         delayMicroseconds(R_SPEED);
     }
     digitalWrite(R_ENABLE, HIGH);
-    return (distH);
+    return (NEW_POS_R);
 }
 
 //************** HOME HORIZONTAL*******************************
@@ -92,7 +95,7 @@ int R_HOME()
         delayMicroseconds(R_SPEED);
         digitalWrite(R_STEP, LOW);
         delayMicroseconds(R_SPEED);
-        //  Serial.println(digitalRead(R_MIN));
+        //Serial.println(digitalRead(R_MIN));
 
     }
     digitalWrite(R_ENABLE, HIGH);
@@ -102,18 +105,18 @@ int R_HOME()
 }
 
 //******* POSITION CHARIOT VERTICAL****************************
-int Z_POS(int compt, int distV, float convZ)
+int Z_POS(int compt, int NEW_POS_Z)
 
 {
-
-    int numSTEPS = (compt - distV) /  convZ;
+    int buffer = 0;
+    float numSTEPS = (compt - NEW_POS_Z) / Z_STEPDIST;
 
     // Serial.println(numSTEPS);
 
     // on verifie que l'on ne depasse pas la longueur du chariot
-    if (distV > MAX_Z_STEPS)
+    if (NEW_POS_Z > MAX_Z_STEPS)
     {
-        distV = MAX_Z_STEPS;
+        NEW_POS_Z = MAX_Z_STEPS;
     }
 
     digitalWrite(Z_ENABLE, LOW);
@@ -130,7 +133,7 @@ int Z_POS(int compt, int distV, float convZ)
 
     // on avance ou recule du nombre de pas
 
-    for (compteur = 0; compteur < abs(numSTEPS); compteur++)
+    for (int i = 0; i < abs(numSTEPS); i++)
     {
 
         digitalWrite(Z_STEP, HIGH);
@@ -141,11 +144,11 @@ int Z_POS(int compt, int distV, float convZ)
         {
             break;
         }
+        buffer = i;
     }
     digitalWrite(Z_ENABLE, HIGH);
-    // return( distV);
-
-    return (compt + compteur * Z_STEPDIST);
+    //return( NEW_POS_Z);
+    return (compt + buffer * Z_STEPDIST);
 }
 
 //************** HOME VERTICAL*********************************
@@ -525,12 +528,10 @@ void setup(){
     R_SPEED = 500;
     TETA_SPEED = 500;
 
-    R_STEPDIST = 3.14 * 10 / 200;
-    Z_STEPDIST = 3.14 * 10 / 200;
 
 
-    // Z_STEPDIST = 3.14 * 10 / 200; //  distance pacourue par 1 pas V
-    tour = 200;
+
+ 
 
     MAX_R_STEPS = 1000;
     MAX_Z_STEPS = 5000;
@@ -565,17 +566,17 @@ void loop()
     R_COUNT = R_HOME();
     Serial.println(R_COUNT);
     Serial.println(digitalRead(R_MIN));
-    R_COUNT = R_POS(R_COUNT, 500, R_STEPDIST);
+    R_COUNT = R_POS(R_COUNT, 500);
     delay(500);
     Serial.println(R_COUNT);
-    R_COUNT = R_POS(R_COUNT, 300, R_STEPDIST);
+    R_COUNT = R_POS(R_COUNT, 300);
 
     Serial.println(R_COUNT);
 
     Z_COUNT = Z_HOME();
     Serial.println(Z_COUNT);
     delay(1000);
-    Z_COUNT = Z_POS(Z_COUNT, 1500, Z_STEPDIST);
+    Z_COUNT = Z_POS(Z_COUNT, 1500);
     Serial.println(Z_COUNT);
 
     //digitalWrite(PAV_ONOFF, HIGH);
