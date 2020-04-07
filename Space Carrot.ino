@@ -5,22 +5,20 @@
 */
 
 
-
+// Activation d'un check si le teta est pas en buté sur un des deux switch
+// création d'une fonction pour checker les states des enswitchs
+// création coordonnées cartésien en polaire 
+// création d'une fonction de coordonnées polaire
 
 
 int PUMP_ONOFF, VACUUM_PUMP_ONOFF;
 
 
-int compteur, MAX_R_STEPS, MAX_Z_STEPS, distH, NEW_POS_Z;
-
-
+int MAX_Z_STEPS, MAX_R_STEPS, MAX_T_STEPS;
 
 int Z_ENABLE, Z_DIR, Z_STEP, Z_MIN, Z_MAX, Z_COUNT, Z_SPEED;
 int R_ENABLE, R_DIR, R_STEP, R_MIN, R_COUNT, R_SPEED;
 int TETA_ENABLE, TETA_DIR, TETA_STEP, TETA_MIN, TETA_MAX, TETA_MAXSTEP, TETA_SPEED;
-
-
-
 
 const int CW = HIGH;
 const int CCW = LOW;
@@ -36,7 +34,7 @@ int countingStepsZ = 0;
 float R_STEPDIST = 3.14 * 10 / 200;
 float Z_STEPDIST = 3.14 * 10 / 200;                 //distance pacourue par 1 pas V
 float TETA_STEPDIST;
-
+int WORK_ANGLE_TETA = 360;                          //Anlge de travail a modifé suivant l'installation de la machine
 
 int FULL_REVOLUTION_STEPS = 200;
 
@@ -46,7 +44,7 @@ int FULL_REVOLUTION_STEPS = 200;
 //******* POSITION CHARIOT HORIZONTAL**************************
 int R_POS(int compt, int NEW_POS_R)
 {
-  //Z_HOME();
+
   float  numSTEPS = (compt - NEW_POS_R) / R_STEPDIST;
     // Serial.println(numSTEPS);
 
@@ -72,14 +70,14 @@ int R_POS(int compt, int NEW_POS_R)
 
     for (int i = 0; i < abs(numSTEPS); i++)
     {
-
         digitalWrite(R_STEP, HIGH);
         delayMicroseconds(R_SPEED);
         digitalWrite(R_STEP, LOW);
         delayMicroseconds(R_SPEED);
     }
     digitalWrite(R_ENABLE, HIGH);
-    return (NEW_POS_R);
+    R_COUNT = NEW_POS_R;
+    //return (NEW_POS_R);
 }
 
 //************** HOME HORIZONTAL*******************************
@@ -101,12 +99,12 @@ int R_HOME()
 
     }
     digitalWrite(R_ENABLE, HIGH);
-
-    return (0);
+    R_COUNT = 0;
+    //return (0);
 
 }
 
-//******* POSITION CHARIOT VERTICAL****************************
+//***************** POSITION CHARIOT VERTICAL******************
 int Z_POS(int compt, int NEW_POS_Z)
 
 {
@@ -142,7 +140,7 @@ int Z_POS(int compt, int NEW_POS_Z)
         delayMicroseconds(Z_SPEED);
         digitalWrite(Z_STEP, LOW);
         delayMicroseconds(Z_SPEED);
-        if (digitalRead(Z_MIN) == HIGH)
+        if (digitalRead(Z_MIN) == HIGH)         // a modifié : coder pour que le bras descende jusqu'à ce que le Z_MAX s'active pour palper le terrain
         {
             break;
         }
@@ -150,7 +148,9 @@ int Z_POS(int compt, int NEW_POS_Z)
     }
     digitalWrite(Z_ENABLE, HIGH);
     //return( NEW_POS_Z);
-    return (compt + buffer * Z_STEPDIST);
+    Z_COUNT = NEW_POS_Z;
+    //Z_COUNT = (compt + buffer+1 * Z_STEPDIST);
+    //return (compt + buffer * Z_STEPDIST);
 }
 
 //************** HOME VERTICAL*********************************
@@ -171,14 +171,22 @@ int Z_HOME()
     }
     digitalWrite(Z_ENABLE, HIGH);
 
-    return (0);
+    Z_COUNT = 0;
+    //return (0);
 
 }
 
-//************** POSITION ANGULAIRE********************************
+//************** POSITION ANGULAIRE****************************
 int TETA_POS()
 {
-
+    if (digitalRead(TETA_MIN)==HIGH || digitalRead(TETA_MAX)==HIGH)
+    {
+        //send notification error
+    }
+    else
+    {
+        //continue program as normal
+    }
 }
 //************** HOME ANGULAIRE********************************
 int TETA_HOME()
@@ -214,7 +222,7 @@ int TETA_HOME()
 
     digitalWrite(TETA_ENABLE, HIGH);
 
-    TETA_STEPDIST = 350 / TETA_MAXSTEP; // qu'est ce que signifie ce 350 ???
+    TETA_STEPDIST = WORK_ANGLE_TETA / TETA_MAXSTEP;             //360 deviendra une variable pour ajuster le type d'installation type 360 degree ou 180 ou autre....
 
     return (TETA_STEPDIST);
 
@@ -426,19 +434,8 @@ void SERIAL_COMMAND()
             Serial.read();
             numSteps = Serial.parseInt();
             Serial.println(numSteps);
-            if (numSteps > 0)
-            {
-                //Serial.println("tourne CW");
-                STEPPER_MOV(R_ENABLE, R_DIR, R_STEP, numSteps, CW, 1000);
-                countingStepsR = (countingStepsR + numSteps);
-            }
-            else if (numSteps < 0)
-            {
-                //Serial.println("tourne CCW");
-                numSteps = abs(numSteps);
-                STEPPER_MOV(R_ENABLE, R_DIR, R_STEP, numSteps, CCW, 1000);
-                countingStepsR = (countingStepsR - numSteps);
-            }
+            R_POS(R_COUNT, numSteps);
+
         }
         else if (Serial.peek() == 'Z')
         {
@@ -446,19 +443,7 @@ void SERIAL_COMMAND()
             Serial.read();
             numSteps = Serial.parseInt();
             Serial.println(numSteps);
-            if (numSteps > 0)
-            {
-                //Serial.println("tourne CW");
-                STEPPER_MOV(Z_ENABLE, Z_DIR, Z_STEP, numSteps, CW, 1000);
-                countingStepsZ = (countingStepsZ + numSteps);
-            }
-            else if (numSteps < 0)
-            {
-                //Serial.println("tourne CCW");
-                numSteps = abs(numSteps);
-                STEPPER_MOV(Z_ENABLE, Z_DIR, Z_STEP, numSteps, CCW, 1000);
-                countingStepsZ = (countingStepsZ - numSteps);
-            }
+            Z_POS(Z_COUNT, numSteps);
         }
         else if (Serial.peek() == 'P')
         {
@@ -468,7 +453,6 @@ void SERIAL_COMMAND()
             Serial.println(state);
             digitalWrite(VACUUM_PUMP_ONOFF, state);
         }
-
         else if (Serial.peek() == 'E')
         {
             int clrBuffer;
@@ -485,9 +469,9 @@ void SERIAL_COMMAND()
         Serial.print("StepsTETA : ");
         Serial.println(countingStepsTETA);
         Serial.print("StepsR : ");
-        Serial.println(countingStepsR);
+        Serial.println(R_COUNT);
         Serial.print("StepsZ : ");
-        Serial.println(countingStepsZ);
+        Serial.println(Z_COUNT);
     }
     else
     {
@@ -510,16 +494,16 @@ void setup(){
     Z_ENABLE = 26;      //enable
     Z_DIR = 12;         //direction
     Z_STEP = 4;         //step
-    Z_MAX = 39;         //fin de course en haut
-    Z_MIN = 36;         //fin course contact sol
+    Z_MAX = 36;         //fin de course en haut
+    Z_MIN = 39;         //fin course contact sol
 
 
     // définition pins rotation bras
     TETA_ENABLE = 2;    //enable
     TETA_DIR = 14;      //direction
     TETA_STEP = 13;     //step
-    TETA_MAX = 34;      //fin de course en haut
-    TETA_MIN = 35;      //fin course contact sol
+    TETA_MAX = 35;      //fin de course en haut
+    TETA_MIN = 34;      //fin course contact sol
 
     // definition pin auxilaire
     PUMP_ONOFF = 25;    //pompe a eau
@@ -529,11 +513,6 @@ void setup(){
     Z_SPEED = 500;
     R_SPEED = 500;
     TETA_SPEED = 500;
-
-
-
-
- 
 
     MAX_R_STEPS = 1000;
     MAX_Z_STEPS = 5000;
@@ -564,33 +543,39 @@ void setup(){
 
 void loop()
 {
-
-    Serial.println(digitalRead(R_MIN));     //Affiche l'état du fin de course en postion minimum
-
-    R_COUNT = R_HOME();                     //Réinitialisation du compteur en R
-
-    Serial.println(R_COUNT);                //Affichage du compteur en R
-
-    Serial.println(digitalRead(R_MIN));     //Affiche l'état du fin de course en postion minimum
-
-    R_COUNT = R_POS(R_COUNT, 500);          // Déplacement de 500 (steps / cm / revolution) et affectation de la nouvelle valeur au compteur
-
-    Serial.println(R_COUNT);                //Affichage du compteur en R
-
-    R_COUNT = R_POS(R_COUNT, 300);          //Déplacement de 300 (steps / cm / revolution) et affectation de la nouvelle valeur au compteur
-
-    Serial.println(R_COUNT);                //Affichage du compteur en R
+    SERIAL_COMMAND();
 
 
+    //Serial.println(digitalRead(R_MIN));     //Affiche l'état du fin de course en postion minimum
 
-    Z_COUNT = Z_HOME();                     //Réinitialisation du compteur en Z
+    //R_COUNT = R_HOME();                     //Réinitialisation du compteur en R
 
-    Serial.println(Z_COUNT);                //Affichage du compteur en Z
+    //Serial.println(R_COUNT);                //Affichage du compteur en R
 
-    Z_COUNT = Z_POS(Z_COUNT, 1500);         //Déplacement de 1500 (steps / cm / revolution) et affectation de la nouvelle valeur au compteur
+    //Serial.println(digitalRead(R_MIN));     //Affiche l'état du fin de course en postion minimum
 
-    Serial.println(Z_COUNT);                // Affichage du compteur en Z
+    //R_COUNT = R_POS(R_COUNT, 500);          // Déplacement de 500 (steps / cm / revolution) et affectation de la nouvelle valeur au compteur
+
+    //Serial.println(R_COUNT);                //Affichage du compteur en R
+
+    //R_COUNT = R_POS(R_COUNT, 300);          //Déplacement de 300 (steps / cm / revolution) et affectation de la nouvelle valeur au compteur
+
+    //Serial.println(R_COUNT);                //Affichage du compteur en R
 
 
-    while (1);                              //Effectue une seule fois le void loop et s'arrête
+
+    //Z_COUNT = Z_HOME();                     //Réinitialisation du compteur en Z
+
+    //Serial.println(Z_COUNT);                //Affichage du compteur en Z
+
+    //Z_COUNT = Z_POS(Z_COUNT, 1500);         //Déplacement de 1500 (steps / cm / revolution) et affectation de la nouvelle valeur au compteur
+
+    //Serial.println(Z_COUNT);                // Affichage du compteur en Z
+
+    //TETA_HOME();
+
+    //Serial.println("fin du test");
+    //
+
+    //while (1);                              //Effectue une seule fois le void loop et s'arrête
 }
