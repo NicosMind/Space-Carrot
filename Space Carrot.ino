@@ -19,7 +19,7 @@ int Z_ENABLE, Z_DIR, Z_STEP, Z_MIN, Z_MAX, Z_COUNT, Z_SPEED;
 int R_ENABLE, R_DIR, R_STEP, R_MIN, R_COUNT, R_SPEED;
 int TETA_ENABLE, TETA_DIR, TETA_STEP, TETA_MIN, TETA_MAX, TETA_MAXSTEP, TETA_SPEED;
 
-float R_STEPDIST, Z_STEPDIST, TETA_STEPDIST;
+
 
 
 const int CW = HIGH;
@@ -34,8 +34,10 @@ int countingStepsR = 0;
 int countingStepsZ = 0;
 
 float R_STEPDIST = 3.14 * 10 / 200;
-float Z_STEPDIST = 3.14 * 10 / 200;
-// Z_STEPDIST = 3.14 * 10 / 200; //  distance pacourue par 1 pas V
+float Z_STEPDIST = 3.14 * 10 / 200;                 //distance pacourue par 1 pas V
+float TETA_STEPDIST;
+
+
 int FULL_REVOLUTION_STEPS = 200;
 
 #define STEPS 400 // va avec la fonction STEPPER_ACCEL_MOV
@@ -44,7 +46,7 @@ int FULL_REVOLUTION_STEPS = 200;
 //******* POSITION CHARIOT HORIZONTAL**************************
 int R_POS(int compt, int NEW_POS_R)
 {
-  Z_HOME();
+  //Z_HOME();
   float  numSTEPS = (compt - NEW_POS_R) / R_STEPDIST;
     // Serial.println(numSTEPS);
 
@@ -57,7 +59,7 @@ int R_POS(int compt, int NEW_POS_R)
     digitalWrite(R_ENABLE, LOW);
 
     // on regarde dans quel sens on part
-    if (numSTEPS < 0)
+    if (numSTEPS < 0)                           // est ce que ça serait pas inférieur ou égale ici ex : count 50 cm new distance = 50 arriere on est dans le cas =0 donc on est bloqué !
     {
         digitalWrite(R_DIR, LOW); // verifier sens !
     }
@@ -562,26 +564,33 @@ void setup(){
 
 void loop()
 {
-    Serial.println(digitalRead(R_MIN));
-    R_COUNT = R_HOME();
-    Serial.println(R_COUNT);
-    Serial.println(digitalRead(R_MIN));
-    R_COUNT = R_POS(R_COUNT, 500);
-    delay(500);
-    Serial.println(R_COUNT);
-    R_COUNT = R_POS(R_COUNT, 300);
 
-    Serial.println(R_COUNT);
+    Serial.println(digitalRead(R_MIN));     //Affiche l'état du fin de course en postion minimum
 
-    Z_COUNT = Z_HOME();
-    Serial.println(Z_COUNT);
-    delay(1000);
-    Z_COUNT = Z_POS(Z_COUNT, 1500);
-    Serial.println(Z_COUNT);
+    R_COUNT = R_HOME();                     //Réinitialisation du compteur en R
 
-    //digitalWrite(PAV_ONOFF, HIGH);
-    //delay(10000);
-    //digitalWrite(PAV_ONOFF, LOW);
+    Serial.println(R_COUNT);                //Affichage du compteur en R
 
-    while (1);
+    Serial.println(digitalRead(R_MIN));     //Affiche l'état du fin de course en postion minimum
+
+    R_COUNT = R_POS(R_COUNT, 500);          // Déplacement de 500 (steps / cm / revolution) et affectation de la nouvelle valeur au compteur
+
+    Serial.println(R_COUNT);                //Affichage du compteur en R
+
+    R_COUNT = R_POS(R_COUNT, 300);          //Déplacement de 300 (steps / cm / revolution) et affectation de la nouvelle valeur au compteur
+
+    Serial.println(R_COUNT);                //Affichage du compteur en R
+
+
+
+    Z_COUNT = Z_HOME();                     //Réinitialisation du compteur en Z
+
+    Serial.println(Z_COUNT);                //Affichage du compteur en Z
+
+    Z_COUNT = Z_POS(Z_COUNT, 1500);         //Déplacement de 1500 (steps / cm / revolution) et affectation de la nouvelle valeur au compteur
+
+    Serial.println(Z_COUNT);                // Affichage du compteur en Z
+
+
+    while (1);                              //Effectue une seule fois le void loop et s'arrête
 }
