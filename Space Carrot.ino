@@ -115,21 +115,16 @@ int R_CALIBRATION()
 
                                                                                 //********************** ARM POSITION *************************
 int Z_POS(int compt, int NEW_POS_Z)
-
 {
-    int buffer = 0;
+//    int buffer = 0;
     float numSTEPS = (compt - NEW_POS_Z) / Z_STEPDIST;
-
     // Serial.println(numSTEPS);
-
     // on verifie que l'on ne depasse pas la longueur du chariot
     if (NEW_POS_Z > MAX_Z_STEPS)
     {
         NEW_POS_Z = MAX_Z_STEPS;
     }
-
     digitalWrite(Z_ENABLE, LOW);
-
     // on regarde dans quel sens on part
     if (numSTEPS < 0)
     {
@@ -139,36 +134,32 @@ int Z_POS(int compt, int NEW_POS_Z)
     {
         digitalWrite(Z_DIR, LOW); // verifier sens !
     }
-
     // on avance ou recule du nombre de pas
-
     for (int i = 0; i < abs(numSTEPS); i++)
     {
-
         digitalWrite(Z_STEP, HIGH);
         delayMicroseconds(Z_SPEED);
         digitalWrite(Z_STEP, LOW);
         delayMicroseconds(Z_SPEED);
         if (digitalRead(Z_MAX) == HIGH)         // a modifié : coder pour que le bras descende jusqu'à ce que le Z_MAX s'active pour palper le terrain
         {
-            digitalWrite(Z_DIR, LOW);                        // à vérifié le sens
-            for (int j = 0; j < Z_MAX_OFFSET; j++)
-            {
-                digitalWrite(Z_STEP, HIGH);
-                delayMicroseconds(Z_SPEED);
-                digitalWrite(Z_STEP, LOW);
-                delayMicroseconds(Z_SPEED);
-                buffer = -j;
-            }
+            //digitalWrite(Z_DIR, LOW);                        // à vérifié le sens
+            //for (int j = 0; j < Z_MAX_OFFSET; j++)
+            //{
+            //    digitalWrite(Z_STEP, HIGH);
+            //    delayMicroseconds(Z_SPEED);
+            //    digitalWrite(Z_STEP, LOW);
+            //    delayMicroseconds(Z_SPEED);
+            //    buffer = -j;
+            //}
             break;      
         }
-        buffer = buffer + i;
+ //       buffer = buffer + i;
     }
     digitalWrite(Z_ENABLE, HIGH);
     //return( NEW_POS_Z);
     Z_COUNT = NEW_POS_Z;
     //Z_COUNT = (compt + buffer+1 * Z_STEPDIST);
-    //return (compt + buffer * Z_STEPDIST);
 }
                                                                                 //********************** HOME ARM *****************************
 int Z_HOME()
