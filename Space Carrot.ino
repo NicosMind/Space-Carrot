@@ -176,7 +176,7 @@ int Z_HOME()
     }
     digitalWrite(Z_ENABLE, HIGH);
     Z_POS(Z_COUNT, Z_MIN_OFFSET);
-    Z_COUNT = Z_COUNT- Z_MIN_OFFSET;
+    Z_COUNT = Z_COUNT - Z_MIN_OFFSET;
 }
 
 
