@@ -38,10 +38,10 @@ int WORK_ANGLE_TETA = 360;                          //Angle de travail a modifé 
 
 int FULL_REVOLUTION_STEPS = 200;
 
-int R_OFFSET = 50; 
-int T_OFFSET = 1;
-int Z_MIN_OFFSET = 50;
-int Z_MAX_OFFSET = 50;
+int T_OFFSET = 10;      //Degree
+int R_OFFSET = 50;     //cm
+int Z_MIN_OFFSET = 50; // cm
+int Z_MAX_OFFSET = 50; //cm
 
 #define STEPS 400 // va avec la fonction STEPPER_ACCEL_MOV
 
@@ -49,20 +49,14 @@ int Z_MAX_OFFSET = 50;
                                                                                 //***************** POSITION TROLLEY **************************
 int R_POS(int compt, int NEW_POS_R)
 {
-
   float  numSTEPS = (compt - NEW_POS_R) / R_STEPDIST;
-    // Serial.println(numSTEPS);
-
-    // on verifie que l'on ne depasse pas la longueur du chariot
-    if (NEW_POS_R > MAX_R_STEPS)
+    if (NEW_POS_R > MAX_R_STEPS) // on verifie que l'on ne depasse pas la longueur du chariot
     {
         NEW_POS_R = MAX_R_STEPS;
     }
-
     digitalWrite(R_ENABLE, LOW);
-
     // on regarde dans quel sens on part
-    if (numSTEPS < 0)                           // est ce que ça serait pas inférieur ou égale ici ex : count 50 cm new distance = 50 arriere on est dans le cas =0 donc on est bloqué !
+    if (numSTEPS < 0)
     {
         digitalWrite(R_DIR, HIGH); // verifier sens !
     }
@@ -70,10 +64,7 @@ int R_POS(int compt, int NEW_POS_R)
     {
         digitalWrite(R_DIR, LOW); // verifier sens !
     }
-
-    // on avance ou recule du nombre de pas
-
-    for (int i = 0; i < abs(numSTEPS); i++)
+    for (int i = 0; i < abs(numSTEPS); i++)   // on avance ou recule du nombre de pas
     {
         digitalWrite(R_STEP, HIGH);
         delayMicroseconds(R_SPEED);
@@ -82,7 +73,6 @@ int R_POS(int compt, int NEW_POS_R)
     }
     digitalWrite(R_ENABLE, HIGH);
     R_COUNT = NEW_POS_R;
-    //return (NEW_POS_R);
 }
 
                                                                                 //********************* HOME TROLLEY **************************
@@ -116,17 +106,14 @@ int R_CALIBRATION()
                                                                                 //********************** ARM POSITION *************************
 int Z_POS(int compt, int NEW_POS_Z)
 {
-//    int buffer = 0;
+    int buffer = 0;
     float numSTEPS = (compt - NEW_POS_Z) / Z_STEPDIST;
-    // Serial.println(numSTEPS);
-    // on verifie que l'on ne depasse pas la longueur du chariot
-    if (NEW_POS_Z > MAX_Z_STEPS)
+    if (NEW_POS_Z > MAX_Z_STEPS)    // on verifie que l'on ne depasse pas la longueur du chariot
     {
         NEW_POS_Z = MAX_Z_STEPS;
     }
     digitalWrite(Z_ENABLE, LOW);
-    // on regarde dans quel sens on part
-    if (numSTEPS < 0)
+    if (numSTEPS < 0)     // on regarde dans quel sens on part
     {
         digitalWrite(Z_DIR, HIGH); // verifier sens !
     }
@@ -134,8 +121,7 @@ int Z_POS(int compt, int NEW_POS_Z)
     {
         digitalWrite(Z_DIR, LOW); // verifier sens !
     }
-    // on avance ou recule du nombre de pas
-    for (int i = 0; i < abs(numSTEPS); i++)
+    for (int i = 0; i < abs(numSTEPS); i++)    // on avance ou recule du nombre de pas
     {
         digitalWrite(Z_STEP, HIGH);
         delayMicroseconds(Z_SPEED);
@@ -143,24 +129,23 @@ int Z_POS(int compt, int NEW_POS_Z)
         delayMicroseconds(Z_SPEED);
         if (digitalRead(Z_MAX) == HIGH)         // a modifié : coder pour que le bras descende jusqu'à ce que le Z_MAX s'active pour palper le terrain
         {
-            //digitalWrite(Z_DIR, LOW);                        // à vérifié le sens
-            //for (int j = 0; j < Z_MAX_OFFSET; j++)
-            //{
-            //    digitalWrite(Z_STEP, HIGH);
-            //    delayMicroseconds(Z_SPEED);
-            //    digitalWrite(Z_STEP, LOW);
-            //    delayMicroseconds(Z_SPEED);
-            //    buffer = -j;
-            //}
-            break;      
+            digitalWrite(Z_DIR, LOW);                        // à vérifié le sens
+            for (int j = 0; j < Z_MAX_OFFSET; j++)
+            {
+                digitalWrite(Z_STEP, HIGH);
+                delayMicroseconds(Z_SPEED);
+                digitalWrite(Z_STEP, LOW);
+                delayMicroseconds(Z_SPEED);
+                buffer = -j;
+            }
+            break;
         }
- //       buffer = buffer + i;
+        buffer = buffer + i;
     }
     digitalWrite(Z_ENABLE, HIGH);
-    //return( NEW_POS_Z);
     Z_COUNT = NEW_POS_Z;
-    //Z_COUNT = (compt + buffer+1 * Z_STEPDIST);
 }
+
                                                                                 //********************** HOME ARM *****************************
 int Z_HOME()
 // retour chariot horizontal s'arrete quand stop passe de 0 a 1
@@ -180,53 +165,42 @@ int Z_HOME()
 }
 
 
-
                                                                                 //******************** ANGLE POSITON **************************
 int TETA_POS(int compt, int NEW_POS_T)
 {
-    if (digitalRead(TETA_MIN)==HIGH || digitalRead(TETA_MAX)==HIGH)
+    float  numSTEPS = ((compt - NEW_POS_T) * T_STEP_ANGLE);
+    if (NEW_POS_T > TETA_MAXSTEP / T_STEP_ANGLE)                        // on verifie que l'on ne depasse pas la longueur du chariot
     {
-        //send notification error
+        (NEW_POS_T) = TETA_MAXSTEP / T_STEP_ANGLE;
+    }
+    digitalWrite(TETA_ENABLE, LOW);
+    if (numSTEPS < 0)    // on regarde dans quel sens on part
+    {
+        digitalWrite(TETA_DIR, HIGH); // verifier sens !
     }
     else
     {
-        float  numSTEPS = ((compt - NEW_POS_T) * T_STEP_ANGLE);
-        NEW_POS_T = NEW_POS_T * T_STEP_ANGLE;
-        // on verifie que l'on ne depasse pas la longueur du chariot
-        if (NEW_POS_T > TETA_MAXSTEP)
-        {
-            (NEW_POS_T ) = TETA_MAXSTEP;
-        }
-        digitalWrite(TETA_ENABLE, LOW);
-
-        // on regarde dans quel sens on part
-        if (numSTEPS < 0)                           // est ce que ça serait pas inférieur ou égale ici ex : count 50 cm new distance = 50 arriere on est dans le cas =0 donc on est bloqué !
-        {
-            digitalWrite(TETA_DIR, HIGH); // verifier sens !
-        }
-        else
-        {
-            digitalWrite(TETA_DIR, LOW); // verifier sens !
-        }
-
-        // on avance ou recule du nombre de pas
-
-        for (int i = 0; i < abs(numSTEPS); i++)
-        {
-            digitalWrite(TETA_STEP, HIGH);
-            delayMicroseconds(TETA_SPEED);
-            digitalWrite(TETA_STEP, LOW);
-            delayMicroseconds(TETA_SPEED);
-        }
-        digitalWrite(TETA_ENABLE, HIGH);
-        T_COUNT = NEW_POS_T;
+        digitalWrite(TETA_DIR, LOW); // verifier sens !
     }
+    for (int i = 0; i < abs(numSTEPS); i++)    // on avance ou recule du nombre de pas
+    {
+        digitalWrite(TETA_STEP, HIGH);
+        delayMicroseconds(TETA_SPEED);
+        digitalWrite(TETA_STEP, LOW);
+        delayMicroseconds(TETA_SPEED);
+    }
+    digitalWrite(TETA_ENABLE, HIGH);
+    T_COUNT = NEW_POS_T;
+    //if (digitalRead(TETA_MIN)==HIGH || digitalRead(TETA_MAX)==HIGH)
+    //{
+    //    //send notification error
+    //    Serial.println("error endswitch");
+    //}
 }
 
                                                                                 //********************** HOME ANGLE ***************************
 int TETA_HOME()
 {
-    // retour chariot horizontal s'arrete quand stop passe de 0 a 1
     digitalWrite(TETA_ENABLE, LOW);
     digitalWrite(TETA_DIR, LOW); // verifier sens !
     while (digitalRead(TETA_MIN) == LOW)
@@ -237,6 +211,8 @@ int TETA_HOME()
         delayMicroseconds(TETA_SPEED);
     }
     digitalWrite(TETA_ENABLE, HIGH);
+    TETA_POS(T_COUNT, T_OFFSET);
+    T_COUNT = (T_COUNT - T_OFFSET);
 }
 
                                                                                 //****************** ANGLE CALIBRATION ************************
@@ -244,7 +220,7 @@ int TETA_CALIBRATION()
 {
     TETA_MAXSTEP = 0;
     digitalWrite(TETA_ENABLE, LOW);
-    digitalWrite(TETA_DIR, HIGH); // verifier sens !
+    digitalWrite(TETA_DIR, LOW); // verifier sens !
     while (digitalRead(TETA_MIN) == LOW)
     {
         digitalWrite(TETA_STEP, HIGH);
@@ -252,20 +228,20 @@ int TETA_CALIBRATION()
         digitalWrite(TETA_STEP, LOW);
         delayMicroseconds(TETA_SPEED);
     }
-    digitalWrite(TETA_DIR, LOW); // verifier sens !
+    digitalWrite(TETA_DIR, HIGH); // verifier sens !
     while (digitalRead(TETA_MAX) == LOW)
     {
         digitalWrite(TETA_STEP, HIGH);
         delayMicroseconds(TETA_SPEED);
         digitalWrite(TETA_STEP, LOW);
         delayMicroseconds(TETA_SPEED);
-        TETA_MAXSTEP=TETA_MAXSTEP++;
+        TETA_MAXSTEP=TETA_MAXSTEP+1;
     }
     digitalWrite(TETA_ENABLE, HIGH);
-    T_STEP_ANGLE = WORK_ANGLE_TETA / TETA_MAXSTEP;
-    Serial.print("NB pas pour 1°");
+    T_STEP_ANGLE = ((TETA_MAXSTEP -T_OFFSET) / WORK_ANGLE_TETA);
+    Serial.print("NB pas pour 1 degree: ");
     Serial.println(T_STEP_ANGLE);
-    Serial.print("Maximum de pas:");
+    Serial.print("Maximum de pas: ");
     Serial.println(TETA_MAXSTEP);
 }
 
@@ -351,9 +327,8 @@ int HOMMING_ALL()
 //    }
 //}
                                                                                 //******************** LINEAR ACCELERATION ********************
-void STEPPER_ACCEL_MOV(int STEP_PIN) {
-    // juste un test d'une potentielle fonction pour gérer l'accélération du moteur (fonctionne seulement en simple moteur pas multi)
 
+void STEPPER_ACCEL_MOV(int STEP_PIN) {
     int delays[STEPS];
     float angle = 1;
     float accel = 0.01;
@@ -369,14 +344,12 @@ void STEPPER_ACCEL_MOV(int STEP_PIN) {
         delays[i] = d;
         lastDelay = d;
     }
-
     // use delays from the array, forward
     for (int i = 0; i < STEPS; i++) {
         digitalWrite(STEP_PIN, HIGH);
         delayMicroseconds(delays[i]);
         digitalWrite(STEP_PIN, LOW);
     }
-
     // use delays from the array, backward
     for (int i = 0; i < STEPS; i++) {
         digitalWrite(STEP_PIN, HIGH);
@@ -384,7 +357,6 @@ void STEPPER_ACCEL_MOV(int STEP_PIN) {
         digitalWrite(STEP_PIN, LOW);
     }
 }
-
 
 
                                                                                 //****************** ENABLE/DISABLE MOTOR *********************
@@ -462,7 +434,7 @@ void SERIAL_COMMAND()
         }
         else if (Serial.peek() == 'T')
         {
-            int numSteps = 0;
+            float numSteps = 0;
             Serial.read();
             numSteps = Serial.parseInt();
             Serial.println(numSteps);
@@ -507,11 +479,15 @@ void SERIAL_COMMAND()
             clrBuffer = Serial.parseInt();
         }
         Serial.print("StepsTETA : ");
-        Serial.println(T_COUNT);
+        Serial.print(T_COUNT);
+        Serial.println(" Degree");
         Serial.print("StepsR : ");
-        Serial.println(R_COUNT);
+        Serial.print(R_COUNT);
+        Serial.println(" cm");
         Serial.print("StepsZ : ");
-        Serial.println(Z_COUNT);
+        Serial.print(Z_COUNT);
+        Serial.println(" cm");
+        Serial.println(" ");
     }
     else
     {
@@ -583,42 +559,12 @@ void setup(){
     pinMode(VACUUM_PUMP_ONOFF, OUTPUT);
     digitalWrite(VACUUM_PUMP_ONOFF, LOW);
     digitalWrite(PUMP_ONOFF, LOW);
+
+    TETA_CALIBRATION();
+    HOMMING_ALL();
 }
 
 void loop()
 {
     SERIAL_COMMAND();
-
-    //Serial.println(digitalRead(R_MIN));     //Affiche l'état du fin de course en postion minimum
-
-    //R_COUNT = R_HOME();                     //Réinitialisation du compteur en R
-
-    //Serial.println(R_COUNT);                //Affichage du compteur en R
-
-    //Serial.println(digitalRead(R_MIN));     //Affiche l'état du fin de course en postion minimum
-
-    //R_COUNT = R_POS(R_COUNT, 500);          // Déplacement de 500 (steps / cm / revolution) et affectation de la nouvelle valeur au compteur
-
-    //Serial.println(R_COUNT);                //Affichage du compteur en R
-
-    //R_COUNT = R_POS(R_COUNT, 300);          //Déplacement de 300 (steps / cm / revolution) et affectation de la nouvelle valeur au compteur
-
-    //Serial.println(R_COUNT);                //Affichage du compteur en R
-
-
-
-    //Z_COUNT = Z_HOME();                     //Réinitialisation du compteur en Z
-
-    //Serial.println(Z_COUNT);                //Affichage du compteur en Z
-
-    //Z_COUNT = Z_POS(Z_COUNT, 1500);         //Déplacement de 1500 (steps / cm / revolution) et affectation de la nouvelle valeur au compteur
-
-    //Serial.println(Z_COUNT);                // Affichage du compteur en Z
-
-    //TETA_HOME();
-
-    //Serial.println("fin du test");
-    //
-
-    //while (1);                              //Effectue une seule fois le void loop et s'arrête
 }
