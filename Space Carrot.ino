@@ -43,6 +43,17 @@ int R_OFFSET = 50;     //cm
 int Z_MIN_OFFSET = 50; // cm
 int Z_MAX_OFFSET = 50; //cm
 
+
+
+//TIMER VARIABLE                // valeur a changer ce sont juste des tests !
+
+long R_HOMMING_INTERVAL = 1000; //milliseconds
+long Z_HOMMING_INTERVAL = 1000;
+long T_HOMMING_INTERVAL = 1000;
+
+
+
+
 #define STEPS 400 // va avec la fonction STEPPER_ACCEL_MOV
 
 
@@ -80,15 +91,21 @@ int R_POS(int compt, int NEW_POS_R)
 int R_HOME()
 // retour chariot horizontal s'arrete quand stop passe de 0 a 1
 {
+    R_COUNT = 0;
+    unsigned long startMillis = millis();
     digitalWrite(R_ENABLE, LOW);
     digitalWrite(R_DIR, LOW); // verifier sens !
     while (digitalRead(R_MIN) == LOW)
     {
+        if (timer(startMillis, R_HOMMING_INTERVAL) == true)
+        {
+            Serial.println("Time out sur R");
+            break;
+        }
         digitalWrite(R_STEP, HIGH);
         delayMicroseconds(R_SPEED);
         digitalWrite(R_STEP, LOW);
         delayMicroseconds(R_SPEED);
-        //Serial.println(digitalRead(R_MIN));
     }
     digitalWrite(R_ENABLE, HIGH);
     R_POS(R_COUNT, R_OFFSET);
@@ -152,10 +169,17 @@ int Z_POS(int compt, int NEW_POS_Z)
 int Z_HOME()
 // retour chariot horizontal s'arrete quand stop passe de 0 a 1
 {
+    Z_COUNT = 0;
+    unsigned long startMillis = millis();
     digitalWrite(Z_ENABLE, LOW);
     digitalWrite(Z_DIR, LOW); // verifier sens !
     while (digitalRead(Z_MIN) == LOW)
     {
+        if (timer(startMillis, Z_HOMMING_INTERVAL) == true)
+        {
+            Serial.println("Time out sur Z");
+            break;
+        }
         digitalWrite(Z_STEP, HIGH);
         delayMicroseconds(Z_SPEED);
         digitalWrite(Z_STEP, LOW);
@@ -199,10 +223,17 @@ int TETA_POS(int compt, int NEW_POS_T)
                                                                                 //********************** HOME ANGLE ***************************
 int TETA_HOME()
 {
+    T_COUNT = 0;
+    unsigned long startMillis = millis();
     digitalWrite(TETA_ENABLE, LOW);
     digitalWrite(TETA_DIR, LOW); // verifier sens !
     while (digitalRead(TETA_MIN) == LOW)
     {
+        if (timer(startMillis, T_HOMMING_INTERVAL) == true)
+        {
+            Serial.println("Time out sur T");
+            break;
+        }
         digitalWrite(TETA_STEP, HIGH);
         delayMicroseconds(TETA_SPEED);
         digitalWrite(TETA_STEP, LOW);
@@ -424,7 +455,7 @@ int CHECK_ENDSTOP_R()
     if (digitalRead(R_MIN) == HIGH /*|| digitalRead(R_MAX) == HIGH*/)
     {
         //send notification error
-        Serial.println("error endswitchsur R");
+        Serial.println("error endswitch sur R");
     }
 }
 int CHECK_ENDSTOP_T()
@@ -435,6 +466,23 @@ int CHECK_ENDSTOP_T()
         Serial.println("error endswitch sur T");
     }
 }
+
+
+
+
+bool timer(long startTime , long interval)
+{
+    unsigned long currentMillis = millis();
+    if ((currentMillis - startTime) > interval)
+    {
+        return (true);
+    }
+    else
+    {
+        return (false);
+    }
+}
+
 
 
                                                                                 //************* CONTROL TROUGH SERIAL MONITOR *****************
