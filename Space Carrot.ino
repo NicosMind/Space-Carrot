@@ -17,7 +17,7 @@ int PUMP_ONOFF, VACUUM_PUMP_ONOFF;
 int MAX_Z_STEPS, MAX_R_STEPS, MAX_T_STEPS;
 
 int Z_ENABLE, Z_DIR, Z_STEP, Z_MIN, Z_MAX, Z_COUNT, Z_SPEED;
-int R_ENABLE, R_DIR, R_STEP, R_MIN, R_COUNT, R_SPEED;
+int R_ENABLE, R_DIR, R_STEP, R_MIN, R_MAX, R_COUNT, R_SPEED;
 int TETA_ENABLE, TETA_DIR, TETA_STEP, TETA_MIN, TETA_MAX, TETA_MAXSTEP, TETA_SPEED, T_COUNT;
 
 const int CW = HIGH;
@@ -73,6 +73,7 @@ int R_POS(int compt, int NEW_POS_R)
     }
     digitalWrite(R_ENABLE, HIGH);
     R_COUNT = NEW_POS_R;
+    CHECK_ENDSTOP_R();
 }
 
                                                                                 //********************* HOME TROLLEY **************************
@@ -144,6 +145,7 @@ int Z_POS(int compt, int NEW_POS_Z)
     }
     digitalWrite(Z_ENABLE, HIGH);
     Z_COUNT = NEW_POS_Z;
+    CHECK_ENDSTOP_Z();
 }
 
                                                                                 //********************** HOME ARM *****************************
@@ -191,11 +193,7 @@ int TETA_POS(int compt, int NEW_POS_T)
     }
     digitalWrite(TETA_ENABLE, HIGH);
     T_COUNT = NEW_POS_T;
-    //if (digitalRead(TETA_MIN)==HIGH || digitalRead(TETA_MAX)==HIGH)
-    //{
-    //    //send notification error
-    //    Serial.println("error endswitch");
-    //}
+    CHECK_ENDSTOP_T();
 }
 
                                                                                 //********************** HOME ANGLE ***************************
@@ -327,7 +325,6 @@ int HOMMING_ALL()
 //    }
 //}
                                                                                 //******************** LINEAR ACCELERATION ********************
-
 void STEPPER_ACCEL_MOV(int STEP_PIN) {
     int delays[STEPS];
     float angle = 1;
@@ -357,6 +354,8 @@ void STEPPER_ACCEL_MOV(int STEP_PIN) {
         digitalWrite(STEP_PIN, LOW);
     }
 }
+
+
 
 
                                                                                 //****************** ENABLE/DISABLE MOTOR *********************
@@ -411,6 +410,31 @@ void ENABLE_ALL()
 }
 
 
+
+int CHECK_ENDSTOP_Z()
+{
+    if (digitalRead(Z_MIN) == HIGH || digitalRead(Z_MAX) == HIGH)
+    {
+        //send notification error
+        Serial.println("error endswitch sur Z");
+    }
+}
+int CHECK_ENDSTOP_R()
+{
+    if (digitalRead(R_MIN) == HIGH /*|| digitalRead(R_MAX) == HIGH*/)
+    {
+        //send notification error
+        Serial.println("error endswitchsur R");
+    }
+}
+int CHECK_ENDSTOP_T()
+{
+    if (digitalRead(TETA_MIN) == HIGH || digitalRead(TETA_MAX) == HIGH)
+    {
+        //send notification error
+        Serial.println("error endswitch sur T");
+    }
+}
 
 
                                                                                 //************* CONTROL TROUGH SERIAL MONITOR *****************
