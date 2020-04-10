@@ -5,8 +5,7 @@
 */
 
 
-// Activation d'un check si le teta est pas en buté sur un des deux switch
-// création d'une fonction pour checker les states des enswitchs
+
 // création coordonnées cartésien en polaire 
 // création d'une fonction de coordonnées polaire
 
@@ -39,17 +38,17 @@ int WORK_ANGLE_TETA = 360;                          //Angle de travail a modifé 
 int FULL_REVOLUTION_STEPS = 200;
 
 int T_OFFSET = 10;      //Degree
-int R_OFFSET = 50;     //cm
-int Z_MIN_OFFSET = 50; // cm
-int Z_MAX_OFFSET = 50; //cm
+int R_OFFSET = 150;     //mm
+int Z_MIN_OFFSET = 50; // mm
+int Z_MAX_OFFSET = 50; //mm
 
 
 
 //TIMER VARIABLE                // valeur a changer ce sont juste des tests !
 
-long R_HOMMING_INTERVAL = 1000; //milliseconds
-long Z_HOMMING_INTERVAL = 1000;
-long T_HOMMING_INTERVAL = 1000;
+long R_HOMMING_INTERVAL = 10000; //milliseconds
+long Z_HOMMING_INTERVAL = 10000;
+long T_HOMMING_INTERVAL = 10000;
 
 
 
@@ -58,13 +57,23 @@ long T_HOMMING_INTERVAL = 1000;
 
 
                                                                                 //***************** POSITION TROLLEY **************************
-int R_POS(int compt, int NEW_POS_R)
+int R_POS(int compt, int NEW_POS_R, int minSpeed, int maxSpeed)
 {
-  float  numSTEPS = (compt - NEW_POS_R) / R_STEPDIST;
+    float  numSTEPS = (compt - NEW_POS_R) / R_STEPDIST;
     if (NEW_POS_R > MAX_R_STEPS) // on verifie que l'on ne depasse pas la longueur du chariot
     {
         NEW_POS_R = MAX_R_STEPS;
     }
+    int lowSpeed = minSpeed;
+    int highSpeed = maxSpeed;
+    int change = 2;
+    int rampUpEnding = (lowSpeed - highSpeed) / change;
+    if (rampUpEnding > abs(numSTEPS) / 2)
+    {
+        rampUpEnding = abs(numSTEPS) / 2;
+    }
+    int rampDownBegin = abs(numSTEPS) - rampUpEnding;
+    int speedDelay = lowSpeed;
     digitalWrite(R_ENABLE, LOW);
     // on regarde dans quel sens on part
     if (numSTEPS < 0)
@@ -78,9 +87,16 @@ int R_POS(int compt, int NEW_POS_R)
     for (int i = 0; i < abs(numSTEPS); i++)   // on avance ou recule du nombre de pas
     {
         digitalWrite(R_STEP, HIGH);
-        delayMicroseconds(R_SPEED);
         digitalWrite(R_STEP, LOW);
-        delayMicroseconds(R_SPEED);
+        delayMicroseconds(speedDelay);
+        if (i < rampUpEnding)
+        {
+            speedDelay -= change;
+        }
+        else if (i > rampDownBegin)
+        {
+            speedDelay += change;
+        }
     }
     digitalWrite(R_ENABLE, HIGH);
     R_COUNT = NEW_POS_R;
@@ -108,7 +124,7 @@ int R_HOME()
         delayMicroseconds(R_SPEED);
     }
     digitalWrite(R_ENABLE, HIGH);
-    R_POS(R_COUNT, R_OFFSET);
+    R_POS(R_COUNT, R_OFFSET,2000,500);
     R_COUNT = R_COUNT - R_OFFSET;
 }
 
@@ -192,13 +208,23 @@ int Z_HOME()
 
 
                                                                                 //******************** ANGLE POSITON **************************
-int TETA_POS(int compt, int NEW_POS_T)
+int TETA_POS(int compt, int NEW_POS_T, int minSpeed, int maxSpeed)
 {
     float  numSTEPS = ((compt - NEW_POS_T) * T_STEP_ANGLE);
     if (NEW_POS_T > TETA_MAXSTEP / T_STEP_ANGLE)                        // on verifie que l'on ne depasse pas la longueur du chariot
     {
         (NEW_POS_T) = TETA_MAXSTEP / T_STEP_ANGLE;
     }
+    int lowSpeed = minSpeed;
+    int highSpeed = maxSpeed;
+    int change = 2;
+    int rampUpEnding = (lowSpeed - highSpeed) / change;
+    if (rampUpEnding > abs(numSTEPS) / 2)
+    {
+        rampUpEnding = abs(numSTEPS) / 2;
+    }
+    int rampDownBegin = abs(numSTEPS) - rampUpEnding;
+    int speedDelay = lowSpeed;
     digitalWrite(TETA_ENABLE, LOW);
     if (numSTEPS < 0)    // on regarde dans quel sens on part
     {
@@ -211,9 +237,16 @@ int TETA_POS(int compt, int NEW_POS_T)
     for (int i = 0; i < abs(numSTEPS); i++)    // on avance ou recule du nombre de pas
     {
         digitalWrite(TETA_STEP, HIGH);
-        delayMicroseconds(TETA_SPEED);
         digitalWrite(TETA_STEP, LOW);
-        delayMicroseconds(TETA_SPEED);
+        delayMicroseconds(speedDelay);
+        if (i < rampUpEnding)
+        {
+            speedDelay -= change;
+        }
+        else if (i > rampDownBegin)
+        {
+            speedDelay += change;
+        }
     }
     digitalWrite(TETA_ENABLE, HIGH);
     T_COUNT = NEW_POS_T;
@@ -240,7 +273,7 @@ int TETA_HOME()
         delayMicroseconds(TETA_SPEED);
     }
     digitalWrite(TETA_ENABLE, HIGH);
-    TETA_POS(T_COUNT, T_OFFSET);
+    TETA_POS(T_COUNT, T_OFFSET, 2000, 500);
     T_COUNT = (T_COUNT - T_OFFSET);
 }
 
@@ -510,7 +543,7 @@ void SERIAL_COMMAND()
             Serial.read();
             numSteps = Serial.parseInt();
             Serial.println(numSteps);
-            TETA_POS(T_COUNT, numSteps);
+            TETA_POS(T_COUNT, numSteps, 2000, 500);
         }
         else if (Serial.peek() == 'R')
         {
@@ -518,7 +551,7 @@ void SERIAL_COMMAND()
             Serial.read();
             numSteps = Serial.parseInt();
             Serial.println(numSteps);
-            R_POS(R_COUNT, numSteps);
+            R_POS(R_COUNT, numSteps, 2000, 500);
 
         }
         else if (Serial.peek() == 'Z')
@@ -550,7 +583,7 @@ void SERIAL_COMMAND()
             Serial.read();
             clrBuffer = Serial.parseInt();
         }
-        Serial.print("StepsTETA : ");
+        Serial.print("StepsT : ");
         Serial.print(T_COUNT);
         Serial.println(" Degree");
         Serial.print("StepsR : ");
@@ -605,9 +638,9 @@ void setup(){
     R_SPEED = 500;
     TETA_SPEED = 500;
 
-    MAX_R_STEPS = 1000;
-    MAX_Z_STEPS = 5000;
-    MAX_T_STEPS = 1000; // variable a bien définir 1000 est une valeur random pour le moment ! 
+    MAX_R_STEPS = 100000;
+    MAX_Z_STEPS = 500000;
+    MAX_T_STEPS = 100000; // variable a bien définir 1000 est une valeur random pour le moment ! 
 
     //definition type pin
     pinMode(Z_ENABLE, OUTPUT);
@@ -632,8 +665,8 @@ void setup(){
     digitalWrite(VACUUM_PUMP_ONOFF, LOW);
     digitalWrite(PUMP_ONOFF, LOW);
 
-    TETA_CALIBRATION();
-    HOMMING_ALL();
+    //TETA_CALIBRATION();
+    //HOMMING_ALL();
 }
 
 void loop()
