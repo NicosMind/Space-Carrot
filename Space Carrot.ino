@@ -97,6 +97,7 @@ int R_POS(int compt, int NEW_POS_R, int minSpeed, int maxSpeed)
         {
             speedDelay += change;
         }
+        //Serial.println(speedDelay);
     }
     digitalWrite(R_ENABLE, HIGH);
     R_COUNT = NEW_POS_R;
