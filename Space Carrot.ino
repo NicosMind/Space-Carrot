@@ -16,7 +16,7 @@ int PUMP_ONOFF, VACUUM_PUMP_ONOFF;
 int MAX_Z_STEPS, MAX_R_STEPS, MAX_T_STEPS;
 
 int Z_ENABLE, Z_DIR, Z_STEP, Z_MIN, Z_MAX, Z_COUNT, Z_SPEED;
-int R_ENABLE, R_DIR, R_STEP, R_MIN, R_MAX, R_COUNT, R_SPEED;
+int R_ENABLE, R_DIR, R_STEP, R_MIN, R_MAX, R_COUNT, R_SPEED, R_MAXSTEP;
 int TETA_ENABLE, TETA_DIR, TETA_STEP, TETA_MIN, TETA_MAX, TETA_MAXSTEP, TETA_SPEED, T_COUNT;
 
 const int CW = HIGH;
@@ -132,7 +132,29 @@ int R_HOME()
                                                                                 //****************** TROLLEY CALIBRATION **********************
 int R_CALIBRATION()
 {
-
+    R_MAXSTEP = 0;
+    digitalWrite(TETA_ENABLE, LOW);
+    digitalWrite(TETA_DIR, LOW); // verifier sens !
+    while (digitalRead(R_MIN) == LOW)
+    {
+        digitalWrite(R_STEP, HIGH);
+        delayMicroseconds(R_SPEED);
+        digitalWrite(R_STEP, LOW);
+        delayMicroseconds(R_SPEED);
+    }
+    digitalWrite(R_DIR, HIGH); // verifier sens !
+    while (digitalRead(R_MAX) == LOW)
+    {
+        digitalWrite(R_STEP, HIGH);
+        delayMicroseconds(R_SPEED);
+        digitalWrite(R_STEP, LOW);
+        delayMicroseconds(R_SPEED);
+        R_MAXSTEP = R_MAXSTEP + 1;
+    }
+    digitalWrite(R_ENABLE, HIGH);
+    Serial.print("Maximum de pas: ");
+    Serial.println(R_MAXSTEP);
+    return(R_MAXSTEP);
 }
 
 
@@ -253,6 +275,7 @@ int TETA_POS(int compt, int NEW_POS_T, int minSpeed, int maxSpeed)
     T_COUNT = NEW_POS_T;
     CHECK_ENDSTOP_T();
 }
+
 
                                                                                 //********************** HOME ANGLE ***************************
 int TETA_HOME()
