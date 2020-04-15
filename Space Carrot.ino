@@ -10,6 +10,7 @@
 // création d'une fonction de coordonnées polaire
 
 
+#include "geometry.h"
 int PUMP_ONOFF, VACUUM_PUMP_ONOFF;
 
 
@@ -696,4 +697,32 @@ void setup(){
 void loop()
 {
     SERIAL_COMMAND();
+
+    CoordinatePolar cp = CartesianToPolar(1, 1);
+
+    CoordinatePolar cp2 = CartesianToPolar(2, 2);
+
+    Serial.println(cp.GetRho());
+    Serial.println(cp.GetTheta());
+
+    Serial.println(cp2.GetRho());
+    Serial.println(cp2.GetTheta());
+
+
+    Person p1 = Person("rat", "cyril");
+
+    Person p2 = Person("courets", "nicolas");
+
+    Serial.println(p1.ToString());
+    Serial.println(p1.GetNom() + " " + p1.GetPrenom());
+
+
+    Serial.println(p2.ToString());
+    p2.SetNom("Couret");
+    Serial.println(p2.ToString());
+
+
+    //Serial.println(rhoCartesianToPolar(10, 12));
+    //Serial.println(thetaCartesianToPolar(10, 12));
+    //while (1);
 }
