@@ -31,30 +31,31 @@ int countingStepsTETA = 0;
 int countingStepsR = 0;
 int countingStepsZ = 0;
 
-float R_STEPDIST = 3.14 * 10 / 200;
-float Z_STEPDIST = 3.14 * 10 / 200;                 //distance pacourue par 1 pas V
+int MICRO_STEP_CONFIG = 1 / 2;
+int FULL_REVOLUTION_STEPS = 400;
+
+float R_STEPDIST = 3.14 * 10 / 400;
+float Z_STEPDIST = 3.14 * 10 / 400;                 //distance pacourue par 1 pas V
 float T_STEP_ANGLE;
 int WORK_ANGLE_TETA = 360;                          //Angle de travail a modifé suivant l'installation de la machine
 
-int FULL_REVOLUTION_STEPS = 200;
 
-int T_OFFSET = 10;      //Degree
-int R_OFFSET = 150;     //mm
-int Z_MIN_OFFSET = 50; // mm
+int T_OFFSET = 10;     //Degree
+int R_OFFSET = 150;    //mm
+int Z_MIN_OFFSET = 50; //mm
 int Z_MAX_OFFSET = 50; //mm
 
 
 
 //TIMER VARIABLE                // valeur a changer ce sont juste des tests !
 
-long R_HOMMING_INTERVAL = 10000; //milliseconds
-long Z_HOMMING_INTERVAL = 10000;
-long T_HOMMING_INTERVAL = 10000;
+long R_HOMMING_INTERVAL = 30000; //milliseconds
+long Z_HOMMING_INTERVAL = 30000;
+long T_HOMMING_INTERVAL = 30000;
 
 
 
 
-#define STEPS 400 // va avec la fonction STEPPER_ACCEL_MOV
 
 
                                                                                 //***************** POSITION TROLLEY **************************
@@ -345,8 +346,8 @@ int HOMMING_ALL()
 
 
 
-
                                                                                 //************** MOOVING ON STEPPER AT THE TIME ***************
+
 //void STEPPER_MOOV(int enablePin, int dirPin, int stepPin, float steps, int dirMotor, int speedMotor)
 //{
 //
@@ -414,35 +415,6 @@ int HOMMING_ALL()
 //    }
 //}
                                                                                 //******************** LINEAR ACCELERATION ********************
-void STEPPER_ACCEL_MOV(int STEP_PIN) {
-    int delays[STEPS];
-    float angle = 1;
-    float accel = 0.01;
-    float c0 = 2000 * sqrt(2 * angle / accel) * 0.67703;
-    float lastDelay = 0;
-    int highSpeed = 100;
-    for (int i = 0; i < STEPS; i++) {
-        float d = c0;
-        if (i > 0)
-            d = lastDelay - (2 * lastDelay) / (4 * i + 1);
-        if (d < highSpeed)
-            d = highSpeed;
-        delays[i] = d;
-        lastDelay = d;
-    }
-    // use delays from the array, forward
-    for (int i = 0; i < STEPS; i++) {
-        digitalWrite(STEP_PIN, HIGH);
-        delayMicroseconds(delays[i]);
-        digitalWrite(STEP_PIN, LOW);
-    }
-    // use delays from the array, backward
-    for (int i = 0; i < STEPS; i++) {
-        digitalWrite(STEP_PIN, HIGH);
-        delayMicroseconds(delays[STEPS - i - 1]);
-        digitalWrite(STEP_PIN, LOW);
-    }
-}
 
 
 
@@ -541,9 +513,7 @@ bool timer(long startTime , long interval)
     }
 }
 
-
-
-                                                                                //************* CONTROL TROUGH SERIAL MONITOR *****************
+                                                                        //************* CONTROL TROUGH SERIAL MONITOR *****************
 void SERIAL_COMMAND()
 {
     if (Serial.available() > 0)
@@ -626,6 +596,14 @@ void SERIAL_COMMAND()
 }
 
 
+int GO_TO_COORDINATE(int x, int y)
+{
+    Coordinates c = CartesianToPolar(x, y);
+    R_POS(R_COUNT, c.array[0], 2000, 400); Serial.println(c.array[0]);
+    TETA_POS(T_COUNT, c.array[1], 2000, 400); Serial.println(c.array[1]);
+
+}
+
 
 
 void setup(){
@@ -697,32 +675,16 @@ void setup(){
 void loop()
 {
     SERIAL_COMMAND();
+    TETA_CALIBRATION();
+    HOMMING_ALL();
+    delay(1000);
+    GO_TO_COORDINATE(1, 1);
+    while (1);
 
-    CoordinatePolar cp = CartesianToPolar(1, 1);
+    //Coordinates c = CartesianToPolar(1, 1);
+    //Serial.println(c.array[0]);
+    //Serial.println(c.array[1]);
+    //while (true) {
 
-    CoordinatePolar cp2 = CartesianToPolar(2, 2);
-
-    Serial.println(cp.GetRho());
-    Serial.println(cp.GetTheta());
-
-    Serial.println(cp2.GetRho());
-    Serial.println(cp2.GetTheta());
-
-
-    Person p1 = Person("rat", "cyril");
-
-    Person p2 = Person("courets", "nicolas");
-
-    Serial.println(p1.ToString());
-    Serial.println(p1.GetNom() + " " + p1.GetPrenom());
-
-
-    Serial.println(p2.ToString());
-    p2.SetNom("Couret");
-    Serial.println(p2.ToString());
-
-
-    //Serial.println(rhoCartesianToPolar(10, 12));
-    //Serial.println(thetaCartesianToPolar(10, 12));
-    //while (1);
+    //}
 }

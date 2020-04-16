@@ -9,6 +9,10 @@
 	#include "WProgram.h"
 #endif
 
+struct Coordinates {
+	double array[2];
+};
+
 class CoordinatePolar {
 	double rho;
 	double theta;
@@ -28,40 +32,12 @@ public:
 	}
 };
 
-class Person {
-	String nom;
-	String prenom;
+Coordinates CartesianToPolar(int x, int y);
 
-public:
-	Person(String name, String prenom) { 
-		nom = name;
-		this->prenom = prenom;
-	}
-
-	Person() {
-		nom = "Toto";
-		prenom = "Zéro";
-	}
-
-	String GetNom() {
-		return nom;
-	}
-
-	String GetPrenom() {
-		return prenom;
-	}
-
-	String SetNom(String nom) {
-		this->nom = nom;
-	}
-
-	String ToString() {
-		return nom + " " + prenom;
-	}
-
+struct Transform
+{
+	double array[2];
 };
-
-CoordinatePolar CartesianToPolar(int x, int y);
-
+Transform PolarToSteps(int rho, int theta);
 #endif
 
